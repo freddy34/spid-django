@@ -27,11 +27,9 @@ import saml2
 from .conf import settings
 from .spid_anomalies import SpidAnomaly
 from .spid_metadata import spid_sp_metadata
-from .spid_request import spid_sp_authn_request
+from .spid_request import spid_sp_authn_request, SAML2_DEFAULT_BINDING
 from .spid_validator import Saml2ResponseValidator
 from .utils import repr_saml_request
-
-SPID_DEFAULT_BINDING = settings.SPID_DEFAULT_BINDING
 
 logger = logging.getLogger('djangosaml2')
 
@@ -118,7 +116,7 @@ def spid_login(request, config_loader_path=None, wayf_template='wayf.html',
 
     # ensure our selected binding is supported by the IDP
     logger.debug(
-        f'Trying binding {SPID_DEFAULT_BINDING} for IDP {selected_idp}'
+        f'Trying binding {SAML2_DEFAULT_BINDING} for IDP {selected_idp}'
     )
     supported_bindings = get_idp_sso_supported_bindings(
         selected_idp,
@@ -128,9 +126,9 @@ def spid_login(request, config_loader_path=None, wayf_template='wayf.html',
         _msg = 'IdP Metadata not found or not valid'
         return HttpResponseNotFound(_msg)
 
-    if SPID_DEFAULT_BINDING not in supported_bindings:
+    if SAML2_DEFAULT_BINDING not in supported_bindings:
         _msg = (
-            f"Requested: {SPID_DEFAULT_BINDING} but the selected "
+            f"Requested: {SAML2_DEFAULT_BINDING} but the selected "
             f"IDP [{selected_idp}] doesn't support "
             f"{BINDING_HTTP_POST} or {BINDING_HTTP_REDIRECT}. "
             f"Check if IdP Metadata is correctly loaded and updated."
@@ -160,9 +158,9 @@ def spid_login(request, config_loader_path=None, wayf_template='wayf.html',
     oq_cache = OutstandingQueriesCache(request.saml_session)
     oq_cache.set(session_id, next_url)
 
-    if SPID_DEFAULT_BINDING == saml2.BINDING_HTTP_POST:
+    if SAML2_DEFAULT_BINDING == saml2.BINDING_HTTP_POST:
         return HttpResponse(http_response['data'])
-    elif SPID_DEFAULT_BINDING == saml2.BINDING_HTTP_REDIRECT:
+    elif SAML2_DEFAULT_BINDING == saml2.BINDING_HTTP_REDIRECT:
         headers = dict(login_response['http_response']['headers'])
         return HttpResponseRedirect(headers['Location'])
 
@@ -238,10 +236,10 @@ def spid_logout(request, config_loader_path=None, **kwargs):
                 sis.append(saml2.samlp.SessionIndex(text=si))
         slo_req.session_index = sis
 
-    slo_req.protocol_binding = SPID_DEFAULT_BINDING
+    slo_req.protocol_binding = SAML2_DEFAULT_BINDING
 
     assertion_consumer_service_url = \
-    client.config._sp_endpoints['assertion_consumer_service'][settings.SPID_CURRENT_INDEX][0]
+        client.config._sp_endpoints['assertion_consumer_service'][settings.SPID_CURRENT_INDEX][0]
     slo_req.assertion_consumer_service_url = assertion_consumer_service_url
 
     slo_req_signed = client.sign(
@@ -258,7 +256,7 @@ def spid_logout(request, config_loader_path=None, **kwargs):
 
     slo_location = client.metadata.single_logout_service(
         subject_id.name_qualifier,
-        SPID_DEFAULT_BINDING,
+        SAML2_DEFAULT_BINDING,
         "idpsso"
     )[0]['location']
 
@@ -268,7 +266,7 @@ def spid_logout(request, config_loader_path=None, **kwargs):
         return HttpResponse(error_message)
 
     http_info = client.apply_binding(
-        SPID_DEFAULT_BINDING,
+        SAML2_DEFAULT_BINDING,
         _req_str,
         slo_location,
         sign=True,
@@ -318,19 +316,19 @@ class AssertionConsumerServiceView(djangosaml2_views.AssertionConsumerServiceVie
 
         # Spid and SAML2 additional tests
         accepted_time_diff = conf.accepted_time_diff
-        recipient = conf._sp_endpoints['assertion_consumer_service'][0][0] # [0][0] should be [settings.settings.SPID_CURRENT_INDEX][0] ?
+        recipient = conf._sp_endpoints['assertion_consumer_service'][0][
+            0]  # [0][0] should be [settings.settings.SPID_CURRENT_INDEX][0] ?
         authn_context_classref = settings.SPID_AUTH_CONTEXT
         issuer = response.response.issuer
         # in_response_to = todo
-        validator = Saml2ResponseValidator(authn_response = response.xmlstr,
-                                           recipient = recipient,
+        validator = Saml2ResponseValidator(authn_response=response.xmlstr,
+                                           recipient=recipient,
                                            # in_response_to = in_response_to,
                                            # requester = requester,
-                                           accepted_time_diff = accepted_time_diff,
-                                           authn_context_class_ref = authn_context_classref,
-                                           return_addrs = response.return_addrs)
+                                           accepted_time_diff=accepted_time_diff,
+                                           authn_context_class_ref=authn_context_classref,
+                                           return_addrs=response.return_addrs)
         validator.run()
-
 
     def handle_acs_failure(self, request, exception=None, status=403, **kwargs):
         return render(

@@ -240,4 +240,5 @@ Warnings
 Authors
 ------------
 
-Giuseppe De Marco
+- Giuseppe De Marco
+- Davide Brunato
