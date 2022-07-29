@@ -6,9 +6,8 @@ import saml2
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
-SPID_BASE_SCHEMA_HOST_PORT = os.environ.get('SPID_BASE_SCHEMA_HOST_PORT', 'http://localhost:8000')
+SPID_BASE_URL = os.environ.get('SPID_BASE_URL', "https://localhost:8000")
 SPID_URLS_PREFIX = 'spid'
-SPID_BASE_URL = f'{SPID_BASE_SCHEMA_HOST_PORT}/{SPID_URLS_PREFIX}'
 
 SPID_ACS_URL_PATH = f'{SPID_URLS_PREFIX}/acs/'
 SPID_SLO_POST_URL_PATH = f'{SPID_URLS_PREFIX}/ls/post/'
@@ -20,7 +19,7 @@ LOGOUT_URL = f'/{SPID_URLS_PREFIX}/logout'
 LOGIN_REDIRECT_URL = f'/{SPID_URLS_PREFIX}/echo_attributes'
 LOGOUT_REDIRECT_URL = '/'
 
-SPID_DEFAULT_BINDING = saml2.BINDING_HTTP_POST
+SAML2_DEFAULT_BINDING = saml2.BINDING_HTTP_POST
 SPID_DIG_ALG = saml2.xmldsig.DIGEST_SHA256
 SPID_SIG_ALG = saml2.xmldsig.SIG_RSA_SHA256
 SPID_NAMEID_FORMAT = NAMEID_FORMAT_TRANSIENT
@@ -34,11 +33,23 @@ SPID_PRIVATE_KEY = os.path.join(SPID_CERTS_DIR, 'private.key')
 SPID_IDENTITY_PROVIDERS_URL = 'https://registry.spid.gov.it/assets/data/idp.json'
 SPID_IDENTITY_PROVIDERS_METADATA_DIR = os.path.join(BASE_DIR, 'spid_config/metadata/')
 
+<<<<<<< HEAD
 SPID_SAML_CHECK_REMOTE_METADATA_ACTIVE = os.environ.get('SPID_SAML_CHECK_REMOTE_METADATA_ACTIVE', '0') == '1'
 SPID_SAML_CHECK_METADATA_URL = os.environ.get('SPID_SAML_CHECK_METADATA_URL', 'http://localhost:8080/metadata.xml')
 
 SPID_TESTENV2_REMOTE_METADATA_ACTIVE = os.environ.get('SPID_TESTENV2_REMOTE_METADATA_ACTIVE', '0') == '1'
 SPID_TESTENV2_METADATA_URL = os.environ.get('SPID_TESTENV2_METADATA_URL', 'http://localhost:8088/metadata')
+=======
+SPID_SAML_CHECK_IDP_ACTIVE = os.environ.get('SPID_SAML_CHECK_IDP_ACTIVE', 'False') == 'True'
+SPID_SAML_CHECK_METADATA_URL = os.environ.get('SPID_SAML_CHECK_METADATA_URL', 'https://localhost:8080/metadata.xml')
+
+SPID_DEMO_IDP_ACTIVE = os.environ.get('SPID_DEMO_IDP_ACTIVE', 'False') == 'True'
+SPID_DEMO_METADATA_URL = os.environ.get('SPID_DEMO_METADATA_URL', 'https://localhost:8080/demo/metadata.xml')
+
+SPID_VALIDATOR_IDP_ACTIVE = os.environ.get('SPID_VALIDATOR_IDP_ACTIVE', 'False') == 'True'
+SPID_VALIDATOR_METADATA_URL = os.environ.get('SPID_VALIDATOR_METADATA_URL', "https://validator.spid.gov.it/metadata.xml")
+
+>>>>>>> main
 
 # Avviso 29v3
 SPID_PREFIXES = dict(
@@ -52,12 +63,18 @@ SPID_PREFIXES = dict(
 SPID_CONTACTS = [
     {
         'contact_type': 'other',
-        'telephone_number': '+39 8475634785',
+        'telephone_number': '+398475634785',
         'email_address': 'tech-info@example.org',
+        'IPACode': 'that-IPA-code',
         'VATNumber': 'IT12345678901',
         'FiscalCode': 'XYZABCAAMGGJ000W',
+<<<<<<< HEAD
         'Private': '',
         # 'PublicServicesFullOperator':''
+=======
+        'Public': '',
+        #'PublicServicesFullOperator':''
+>>>>>>> main
     },
     # {
     # 'contact_type': 'billing',
@@ -77,6 +94,7 @@ SPID_CONTACTS = [
     # },
 ]
 
+<<<<<<< HEAD
 # new features parameter
 SPID_CURRENT_INDEX: int = int(os.getenv("SPID_CURRENT_INDEX", "0"), 10)  # in my case export SPID_CURRENT_INDEX=1
 
@@ -207,45 +225,78 @@ SAML_CONFIG = {
             # Responses, i.e. SAML Responses for which it has not sent
             # a respective SAML Authentication Request.
             'allow_unsolicited': False,
+=======
+>>>>>>> main
 
-            # Permits to have attributes not configured in attribute-mappings
-            # otherwise...without OID will be rejected
-            'allow_unknown_attributes': True,
-        },
+CIE_CONTACTS = [
+    {
+        'contact_type': 'administrative',
+        'IPACode': 'that-IPA-code',
+        'VATNumber': 'IT12345678901',
+        'FiscalCode': 'XYZABCAAMGGJ000W',
+        'NACE2Code': '12.34.56',
+        'Municipality': 'H501',
+        'Province': 'CS',
+        'Country': 'IT',
+        'Company': 'same-to-OrganizationName-if-PA',
+        'telephone_number': '+398475634785',
+        'email_address': 'tech-info@example.org',
+        'Public': '',
     },
-
-    # many metadata, many idp...
-    'metadata': {
-        'local': [
-            SPID_IDENTITY_PROVIDERS_METADATA_DIR
-        ],
-        'remote': []
+    {
+        'contact_type': 'technical',
+        'telephone_number': '+39 84756344785',
+        'email_address': 'info@example.org',
+        'IPACode': 'that-IPA-code',
+        'VATNumber': 'IT12345678901',
+        'FiscalCode': 'XYZABCAAMGGJ000W',
+        'NACE2Code': '12.34.56',
+        'Municipality': 'H501',
+        'Province': 'CS',
+        'Country': 'IT',
+        'Company': 'same-to-OrganizationName-if-PA',
+        'telephone_number': '+398475634785',
+        'email_address': 'tech-info@example.org',
     },
+]
 
+<<<<<<< HEAD
     # Signing
     'key_file': SPID_PRIVATE_KEY,
     'cert_file': SPID_PUBLIC_CERT,
 
     # Encryption
     'encryption_keypairs': encryption_keypairs,
+=======
+>>>>>>> main
 
-    # you can set multilanguage information here
+# Configuration for pysaml2 as managed by djangosaml2. For SPID SP service the most
+# part is built dynamically from provided SPID_* settings and from SPID_* defaults.
+SAML_CONFIG = {
+    # Required organization info, you can set multi-language information here.
     'organization': {
         'name': [('Example', 'it'), ('Example', 'en')],
         'display_name': [('Example', 'it'), ('Example', 'en')],
         'url': [('http://www.example.it', 'it'), ('http://www.example.it', 'en')],
     },
+
+    # Other common options used by SPID configuration
+    'debug': True,
+    'xmlsec_binary': get_xmlsec_binary(['/opt/local/bin', '/usr/bin/xmlsec1']),
+
+    "disable_ssl_certificate_validation": True,
+
+    # The other entries are dynamically generated from SPID_* provided settings
+    # and defaults. You can still provide those entries here but they can useful
+    # only for other SAML2 service in your installation, not for SPID.
+    #
+    # If you want to provide a full static SAML_CONFIG you need to define also
+    # SAML_CONFIG_LOADER setting, typically it can be set pointing to the default
+    # djangosaml2's config loader function:
+    #
+    #   SAML_CONFIG_LOADER = 'djangosaml2.conf.config_settings_loader'
+    #
 }
-
-if SPID_SAML_CHECK_REMOTE_METADATA_ACTIVE:
-    SAML_CONFIG['metadata']['remote'].append(
-        {'url': SPID_SAML_CHECK_METADATA_URL}
-    )
-
-if SPID_TESTENV2_REMOTE_METADATA_ACTIVE:
-    SAML_CONFIG['metadata']['remote'].append(
-        {'url': SPID_TESTENV2_METADATA_URL}
-    )
 
 # OR NAME_ID or MAIN_ATTRIBUTE (not together!)
 SAML_USE_NAME_ID_AS_USERNAME = False
