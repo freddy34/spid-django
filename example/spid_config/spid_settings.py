@@ -6,6 +6,7 @@ import saml2
 # Build paths inside the project like this: os.path.join(BASE_DIR, ...)
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+SPID_BASE_URL = os.environ.get('SPID_BASE_URL', "https://localhost:8000")
 SPID_URLS_PREFIX = 'spid'
 
 SPID_ACS_URL_PATH = f'{SPID_URLS_PREFIX}/acs/'
@@ -18,7 +19,7 @@ LOGOUT_URL = f'/{SPID_URLS_PREFIX}/logout'
 LOGIN_REDIRECT_URL = f'/{SPID_URLS_PREFIX}/echo_attributes'
 LOGOUT_REDIRECT_URL = '/'
 
-SPID_DEFAULT_BINDING = saml2.BINDING_HTTP_POST
+SAML2_DEFAULT_BINDING = saml2.BINDING_HTTP_POST
 SPID_DIG_ALG = saml2.xmldsig.DIGEST_SHA256
 SPID_SIG_ALG = saml2.xmldsig.SIG_RSA_SHA256
 SPID_NAMEID_FORMAT = NAMEID_FORMAT_TRANSIENT
@@ -32,11 +33,15 @@ SPID_PRIVATE_KEY = os.path.join(SPID_CERTS_DIR, 'private.key')
 SPID_IDENTITY_PROVIDERS_URL = 'https://registry.spid.gov.it/assets/data/idp.json'
 SPID_IDENTITY_PROVIDERS_METADATA_DIR = os.path.join(BASE_DIR, 'spid_config/metadata/')
 
-SPID_SAML_CHECK_REMOTE_METADATA_ACTIVE = os.environ.get('SPID_SAML_CHECK_REMOTE_METADATA_ACTIVE', 'False') == 'True'
-SPID_SAML_CHECK_METADATA_URL = os.environ.get('SPID_SAML_CHECK_METADATA_URL', 'http://localhost:8080/metadata.xml')
+SPID_SAML_CHECK_IDP_ACTIVE = os.environ.get('SPID_SAML_CHECK_IDP_ACTIVE', 'False') == 'True'
+SPID_SAML_CHECK_METADATA_URL = os.environ.get('SPID_SAML_CHECK_METADATA_URL', 'https://localhost:8080/metadata.xml')
 
-SPID_TESTENV2_REMOTE_METADATA_ACTIVE = os.environ.get('SPID_TESTENV2_REMOTE_METADATA_ACTIVE', 'False') == 'True'
-SPID_TESTENV2_METADATA_URL = os.environ.get('SPID_TESTENV2_METADATA_URL', 'http://localhost:8088/metadata')
+SPID_DEMO_IDP_ACTIVE = os.environ.get('SPID_DEMO_IDP_ACTIVE', 'False') == 'True'
+SPID_DEMO_METADATA_URL = os.environ.get('SPID_DEMO_METADATA_URL', 'https://localhost:8080/demo/metadata.xml')
+
+SPID_VALIDATOR_IDP_ACTIVE = os.environ.get('SPID_VALIDATOR_IDP_ACTIVE', 'False') == 'True'
+SPID_VALIDATOR_METADATA_URL = os.environ.get('SPID_VALIDATOR_METADATA_URL', "https://validator.spid.gov.it/metadata.xml")
+
 
 # Avviso 29v3
 SPID_PREFIXES = dict(
@@ -50,11 +55,12 @@ SPID_PREFIXES = dict(
 SPID_CONTACTS = [
     {
         'contact_type': 'other',
-        'telephone_number': '+39 8475634785',
+        'telephone_number': '+398475634785',
         'email_address': 'tech-info@example.org',
+        'IPACode': 'that-IPA-code',
         'VATNumber': 'IT12345678901',
         'FiscalCode': 'XYZABCAAMGGJ000W',
-        'Private': '',
+        'Public': '',
         #'PublicServicesFullOperator':''
     },
     # {
@@ -75,134 +81,65 @@ SPID_CONTACTS = [
     # },
 ]
 
+CIE_CONTACTS = [
+    {
+        'contact_type': 'administrative',
+        'IPACode': 'that-IPA-code',
+        'VATNumber': 'IT12345678901',
+        'FiscalCode': 'XYZABCAAMGGJ000W',
+        'NACE2Code': '12.34.56',
+        'Municipality': 'H501',
+        'Province': 'CS',
+        'Country': 'IT',
+        'Company': 'same-to-OrganizationName-if-PA',
+        'telephone_number': '+398475634785',
+        'email_address': 'tech-info@example.org',
+        'Public': '',
+    },
+    {
+        'contact_type': 'technical',
+        'telephone_number': '+39 84756344785',
+        'email_address': 'info@example.org',
+        'IPACode': 'that-IPA-code',
+        'VATNumber': 'IT12345678901',
+        'FiscalCode': 'XYZABCAAMGGJ000W',
+        'NACE2Code': '12.34.56',
+        'Municipality': 'H501',
+        'Province': 'CS',
+        'Country': 'IT',
+        'Company': 'same-to-OrganizationName-if-PA',
+        'telephone_number': '+398475634785',
+        'email_address': 'tech-info@example.org',
+    },
+]
 
-# Configuration for pysaml2 managed by djangosaml2, that is usually replaced or
-# updated by a dynamic configurations adapted for the running Django service.
+# Configuration for pysaml2 as managed by djangosaml2. For SPID SP service the most
+# part is built dynamically from provided SPID_* settings and from SPID_* defaults.
 SAML_CONFIG = {
-    #
-    # Non SPID-only related info are used for building dynamic running config.
-
-    # you can set multilanguage information here
+    # Required organization info, you can set multi-language information here.
     'organization': {
         'name': [('Example', 'it'), ('Example', 'en')],
         'display_name': [('Example', 'it'), ('Example', 'en')],
         'url': [('http://www.example.it', 'it'), ('http://www.example.it', 'en')],
     },
+
+    # Other common options used by SPID configuration
     'debug': True,
     'xmlsec_binary': get_xmlsec_binary(['/opt/local/bin', '/usr/bin/xmlsec1']),
 
-    # The following entries are reported here only for show a complete configuration
-    # for pysaml2. When a SPID URL is requested these entries are replaced by proper
-    # configurations, adapted for the running Django service on the basis of the
-    # defined SPID_* settings.
+    "disable_ssl_certificate_validation": True,
 
-    # TODO: Avviso SPID n. 19 v.4 per enti AGGREGATORI l’entityID deve contenere il codice attività pub-op-full
-    #'entityid': f'{BASE_URL}/pub-op-full/',  # TODO: Aggiungere voce di configurazione SPID_* apposita??
-    'entityid': f'http://localhost:8000/{SPID_URLS_PREFIX}/metadata',
-
-    'attribute_map_dir': f'{BASE_DIR}/djangosaml2_spid/attribute_maps/',
-
-    'service': {
-        'sp': {
-            'name': f'http://localhost:8000/{SPID_URLS_PREFIX}/metadata/',
-            'name_qualifier': 'http://localhost:8000',
-
-            'name_id_format': [SPID_NAMEID_FORMAT],
-
-            'endpoints': {
-                'assertion_consumer_service': [
-                    (f'http://localhost:8000/{SPID_ACS_URL_PATH}',
-                     saml2.BINDING_HTTP_POST),
-                ],
-                'single_logout_service': [
-                    (f'http://localhost:8000/{SPID_SLO_POST_URL_PATH}',
-                     saml2.BINDING_HTTP_POST),
-                ],
-            },
-
-            # Mandates that the IdP MUST authenticate the presenter directly
-            # rather than rely on a previous security context.
-            'force_authn': False,  # SPID
-            'name_id_format_allow_create': False,
-
-            # attributes that this project need to identify a user
-            'required_attributes': [
-                'spidCode',
-                'name',
-                'familyName',
-                'fiscalNumber',
-                'email'
-            ],
-
-            'requested_attribute_name_format': saml2.saml.NAME_FORMAT_BASIC,
-            'name_format': saml2.saml.NAME_FORMAT_BASIC,
-
-            # attributes that may be useful to have but not required
-            'optional_attributes': [
-                'gender',
-                'companyName',
-                'registeredOffice',
-                'ivaCode',
-                'idCard',
-                'digitalAddress',
-                'placeOfBirth',
-                'countyOfBirth',
-                'dateOfBirth',
-                'address',
-                'mobilePhone',
-                'expirationDate'
-            ],
-
-            'signing_algorithm': SPID_SIG_ALG,
-            'digest_algorithm': SPID_DIG_ALG,
-
-            'authn_requests_signed': True,
-            'logout_requests_signed': True,
-
-            # Indicates that Authentication Responses to this SP must
-            # be signed. If set to True, the SP will not consume
-            # any SAML Responses that are not signed.
-            'want_assertions_signed': True,
-
-            # When set to true, the SP will consume unsolicited SAML
-            # Responses, i.e. SAML Responses for which it has not sent
-            # a respective SAML Authentication Request.
-            'allow_unsolicited': False,
-
-            # Permits to have attributes not configured in attribute-mappings
-            # otherwise...without OID will be rejected
-            'allow_unknown_attributes': True,
-        },
-    },
-
-    # many metadata, many idp...
-    'metadata': {
-        'local': [
-            SPID_IDENTITY_PROVIDERS_METADATA_DIR
-        ],
-        'remote': []
-    },
-
-    # Signing
-    'key_file': SPID_PRIVATE_KEY,
-    'cert_file': SPID_PUBLIC_CERT,
-
-    # Encryption
-    'encryption_keypairs': [{
-        'key_file': SPID_PRIVATE_KEY,
-        'cert_file': SPID_PUBLIC_CERT,
-    }],
+    # The other entries are dynamically generated from SPID_* provided settings
+    # and defaults. You can still provide those entries here but they can useful
+    # only for other SAML2 service in your installation, not for SPID.
+    #
+    # If you want to provide a full static SAML_CONFIG you need to define also
+    # SAML_CONFIG_LOADER setting, typically it can be set pointing to the default
+    # djangosaml2's config loader function:
+    #
+    #   SAML_CONFIG_LOADER = 'djangosaml2.conf.config_settings_loader'
+    #
 }
-
-if SPID_SAML_CHECK_REMOTE_METADATA_ACTIVE:
-    SAML_CONFIG['metadata']['remote'].append(
-        {'url': SPID_SAML_CHECK_METADATA_URL}
-    )
-
-if SPID_TESTENV2_REMOTE_METADATA_ACTIVE:
-    SAML_CONFIG['metadata']['remote'].append(
-        {'url': SPID_TESTENV2_METADATA_URL}
-    )
 
 # OR NAME_ID or MAIN_ATTRIBUTE (not together!)
 SAML_USE_NAME_ID_AS_USERNAME = False

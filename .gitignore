@@ -128,12 +128,11 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-# IDE
-.idea
-.vscode
+# downloaded metadata
+example/spid_config/metadata/*
+!example/metadata/satosa-spid.xml
+!example/metadata/spid-saml-check.xml
+tests/metadata/*
+!tests/metadata/spid-saml-check.xml
 
-# sub-project
-spid-saml-check
-
-# example project downloaded metadata
-example/spid_config/metadata/idp_*.xml
+example/static/*
